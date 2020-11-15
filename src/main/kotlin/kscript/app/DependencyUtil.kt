@@ -1,12 +1,11 @@
 package kscript.app
 
 import kotlinx.coroutines.runBlocking
-import org.eclipse.aether.artifact.DefaultArtifact
+import kscript.app.headerAuth.MavenHttpHeaderDependencyResolver
 import java.io.File
 import kotlin.script.experimental.api.valueOrThrow
 import kotlin.script.experimental.dependencies.CompoundDependenciesResolver
 import kotlin.script.experimental.dependencies.FileSystemDependenciesResolver
-import kotlin.script.experimental.dependencies.RepositoryCoordinates
 import kotlin.script.experimental.dependencies.maven.MavenDependenciesResolver
 import kotlin.script.experimental.dependencies.maven.MavenRepositoryCoordinates
 
@@ -95,7 +94,16 @@ fun resolveDependenciesViaKotlin(depIds: List<String>, customRepos: List<MavenRe
         repoCoords.map { addRepository(it)}
     }
 
-    val resolver = CompoundDependenciesResolver(FileSystemDependenciesResolver(), MavenDependenciesResolver(), mvnResolver)
+    val mvnHeaderResolver = MavenHttpHeaderDependencyResolver().apply {
+        repoCoords.map { addRepository(it)}
+    }
+
+    val resolver = CompoundDependenciesResolver(
+        FileSystemDependenciesResolver(),
+        MavenDependenciesResolver(),
+        mvnResolver,
+        mvnHeaderResolver
+    )
 
     val resolvedDependencies = runBlocking {
         depIds.map {
